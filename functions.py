@@ -7,7 +7,7 @@ import concurrent.futures
 
 from typing import List
 from bs4 import BeautifulSoup
-from utils import inference_logger
+from utils import get_weather_info, inference_logger
 from langchain.tools import tool
 from langchain_core.utils.function_calling import convert_to_openai_tool
 
@@ -116,6 +116,162 @@ def get_current_stock_price(symbol: str) -> float:
     print(f"Error fetching current price for {symbol}: {e}")
     return None
 
+@tool
+def get_weather_temperature(coords: str) -> float:
+  """
+  Get the current temperature for the given latitude and longitude.
+
+  Args:
+   coords (str): the latitude and longitude as a string, separated by a ', '
+
+  Returns:
+    float: hourly temperature.
+  """
+  try:
+
+    lat = float(coords.split(",")[0])
+    long = float(coords.split(",")[1])
+    response = get_weather_info(lat, long, "temperature_2m")
+
+    # Process hourly data. The order of variables needs to be the same as requested.
+    hourly = response.Hourly()
+    hourly_temperature_2m = hourly.Variables(0).ValuesAsNumpy()[0]
+
+    return hourly_temperature_2m if hourly_temperature_2m else None
+  except Exception as e:
+    print(f"Error weather for {lat} {long}: {e}")
+    return None
+  
+@tool
+def get_weather_humidity(coords: str) -> float:
+  """
+  Get the current relative humidity for the given latitude and longitude.
+
+  Args:
+   coords (str): the latitude and longitude as a string, separated by a ', '
+
+  Returns:
+    float: relative humidity.
+  """
+  try:
+
+    lat = float(coords.split(",")[0])
+    long = float(coords.split(",")[1])
+    response = get_weather_info(lat, long, "relative_humidity_2m")
+
+    # Process hourly data. The order of variables needs to be the same as requested.
+    hourly = response.Hourly()
+    hourly_relative_humidity_2m = hourly.Variables(0).ValuesAsNumpy()[0]
+
+    return hourly_relative_humidity_2m if hourly_relative_humidity_2m else None
+  except Exception as e:
+    print(f"Error weather for {lat} {long}: {e}")
+    return None
+  
+@tool
+def get_weather_pressure(coords: str) -> float:
+  """
+  Get the current pressure for the given latitude and longitude.
+
+  Args:
+   coords (str): the latitude and longitude as a string, separated by a ', '
+
+  Returns:
+    float: pressure.
+  """
+  try:
+
+    lat = float(coords.split(",")[0])
+    long = float(coords.split(",")[1])
+    response = get_weather_info(lat, long, "pressure_msl")
+
+    # Process hourly data. The order of variables needs to be the same as requested.
+    hourly = response.Hourly()
+    hourly_pressure_msl = hourly.Variables(0).ValuesAsNumpy()[0]
+
+    return hourly_pressure_msl if hourly_pressure_msl else None
+  except Exception as e:
+    print(f"Error weather for {lat} {long}: {e}")
+    return None
+  
+@tool
+def get_weather_cloud_cover(coords: str) -> float:
+  """
+  Get the current cloud cover for the given latitude and longitude.
+
+  Args:
+   coords (str): the latitude and longitude as a string, separated by a ', '
+
+  Returns:
+    float: cloud cover.
+  """
+  try:
+
+    lat = float(coords.split(",")[0])
+    long = float(coords.split(",")[1])
+    response = get_weather_info(lat, long, "cloud_cover")
+
+    # Process hourly data. The order of variables needs to be the same as requested.
+    hourly = response.Hourly()
+    hourly_cloud_cover = hourly.Variables(0).ValuesAsNumpy()[0]
+
+    return hourly_cloud_cover if hourly_cloud_cover else None
+  except Exception as e:
+    print(f"Error weather for {lat} {long}: {e}")
+    return None
+  
+@tool
+def get_weather_wind(coords: str) -> float:
+  """
+  Get the current wind cover for the given latitude and longitude.
+
+  Args:
+   coords (str): the latitude and longitude as a string, separated by a ', '
+
+  Returns:
+    float: wind cover.
+  """
+  try:
+
+    lat = float(coords.split(",")[0])
+    long = float(coords.split(",")[1])
+    response = get_weather_info(lat, long, "wind_speed_10m")
+
+    # Process hourly data. The order of variables needs to be the same as requested.
+    hourly = response.Hourly()
+    hourly_wind_speed_10m = hourly.Variables(0).ValuesAsNumpy()[0]
+
+    return hourly_wind_speed_10m if hourly_wind_speed_10m else None
+  except Exception as e:
+    print(f"Error weather for {lat} {long}: {e}")
+    return None
+  
+@tool
+def get_weather_precipitation(coords: str) -> float:
+  """
+  Get the current precipitation for the given latitude and longitude.
+
+  Args:
+   coords (str): the latitude and longitude as a string, separated by a ', '
+
+  Returns:
+    float: precipitation.
+  """
+  try:
+
+    lat = float(coords.split(",")[0])
+    long = float(coords.split(",")[1])
+    response = get_weather_info(lat, long, "precipitation")
+
+    # Process hourly data. The order of variables needs to be the same as requested.
+    hourly = response.Hourly()
+    hourly_precipitation = hourly.Variables(0).ValuesAsNumpy()[0]
+
+    return hourly_precipitation if hourly_precipitation else None
+  except Exception as e:
+    print(f"Error weather for {lat} {long}: {e}")
+    return None
+  
 @tool
 def get_stock_fundamentals(symbol: str) -> dict:
     """
@@ -304,7 +460,13 @@ def get_openai_tools() -> List[dict]:
         get_key_financial_ratios,
         get_analyst_recommendations,
         get_dividend_data,
-        get_technical_indicators
+        get_technical_indicators,
+        get_weather_temperature,
+        get_weather_humidity,
+        get_weather_pressure,
+        get_weather_cloud_cover,
+        get_weather_wind,
+        get_weather_precipitation
     ]
 
     tools = [convert_to_openai_tool(f) for f in functions]

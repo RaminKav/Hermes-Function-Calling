@@ -9,6 +9,11 @@ import xml.etree.ElementTree as ET
 from art import text2art
 from logging.handlers import RotatingFileHandler
 
+import openmeteo_requests
+
+import requests_cache
+from retry_requests import retry
+
 logging.basicConfig(
     format="%(asctime)s,%(msecs)03d %(levelname)-8s [%(filename)s:%(lineno)d] %(message)s",
     datefmt="%Y-%m-%d:%H:%M:%S",
@@ -156,4 +161,21 @@ def extract_json_from_markdown(text):
     else:
         print("JSON string not found in the text.")
     return None
+
+def get_weather_info(lat: float, long: float, data: str):
+    # Setup the Open-Meteo API client with cache and retry on error
+    cache_session = requests_cache.CachedSession('.cache', expire_after = 3600)
+    retry_session = retry(cache_session, retries = 5, backoff_factor = 0.2)
+    openmeteo = openmeteo_requests.Client(session = retry_session)
+
+    # Make sure all required weather variables are listed here
+    # The order of variables in hourly or daily is important to assign them correctly below
+    url = "https://api.open-meteo.com/v1/forecast"
+    params = {
+        "latitude": lat,
+        "longitude": long,
+        "hourly": data
+    }
+    responses = openmeteo.weather_api(url, params=params)
+    return responses[0]
 
